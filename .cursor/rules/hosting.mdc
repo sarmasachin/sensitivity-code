@@ -7,7 +7,7 @@ alwaysApply: true
 
 Decisions are locked. Do not ask again. Update this file when a new hosting fact is confirmed.
 
-Same VPS as BGMI (`root@srv1792057`, IP `2.57.91.91`). This app stays fully separate.
+Same VPS as BGMI (`root@srv1792057`, IP `187.127.154.196`). This app stays fully separate. `2.57.91.91` is Hostinger parking/CDN, not this server.
 
 | | This site | BGMI — do not touch |
 |---|---|---|
@@ -21,7 +21,7 @@ Same VPS as BGMI (`root@srv1792057`, IP `2.57.91.91`). This app stays fully sepa
 
 DNS is already set. Do not add records. Do not click Reset DNS records.
 
-- `A` `@` → `2.57.91.91`
+- `A` `@` → `187.127.154.196`
 - `CNAME` `www` → `sensitivitycode.com`
 
 Ports checked on the server: `80` and `443` are Nginx, `3001` is BGMI `next-server`. `3002` is free. Use `3002`.

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { LogoMark } from "@/components/logo-mark";
 import { accountEmailKey, lastCodeKey } from "@/lib/session";
 
 type SiteHeaderProps = {
@@ -117,11 +118,7 @@ export function SiteHeader({ onGate }: SiteHeaderProps) {
             </svg>
           </button>
           <a className="flex items-center gap-3 text-left" href="/">
-            <svg className="block h-8 w-8" viewBox="0 0 32 32" aria-hidden="true">
-              <rect width="32" height="32" rx="8" fill="#14171c" />
-              <path d="M9 16h14M16 9v14" stroke="#fff" strokeWidth="1.5" />
-              <circle cx="16" cy="16" r="3.2" fill="none" stroke="#fff" strokeWidth="1.5" />
-            </svg>
+            <LogoMark className="block h-9 w-9 shrink-0" />
             <span className="flex flex-col">
               <span className="text-[10px] uppercase tracking-[0.16em] text-[#5c6570]">Community</span>
               <span className="font-[var(--display)] text-[22px] font-medium leading-none tracking-[-0.03em] max-[980px]:whitespace-nowrap max-[980px]:text-lg">
