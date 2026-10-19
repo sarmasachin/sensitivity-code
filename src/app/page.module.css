@@ -1,0 +1,18 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+.page main {
+  flex: 1;
+  width: min(1120px, calc(100% - 48px));
+  margin: 0 auto;
+}
+
+@media (max-width: 720px) {
+  .page main {
+    width: min(1120px, calc(100% - 32px));
+  }
+}

@@ -1,0 +1,31 @@
+---
+description: Locked live-server hosting for sensitivitycode.com. Do not re-ask these decisions.
+alwaysApply: true
+---
+
+# Hosting — sensitivitycode.com
+
+Decisions are locked. Do not ask again. Update this file when a new hosting fact is confirmed.
+
+Same VPS as BGMI (`root@srv1792057`, IP `2.57.91.91`). This app stays fully separate.
+
+| | This site | BGMI — do not touch |
+|---|---|---|
+| Domain | `sensitivitycode.com` | `sensitivitysettings.com` |
+| Folder | `/var/www/sensitivitycode` | `/var/www/bgmi` |
+| Port | `3002` | `3001` |
+| PM2 | `sensitivitycode` | `bgmi` |
+| Database | own PostgreSQL database | BGMI database |
+| Nginx | own server block for `sensitivitycode.com` and `www` | BGMI server block |
+| Env | own `.env` in this folder | BGMI `.env` |
+
+DNS is already set. Do not add records. Do not click Reset DNS records.
+
+- `A` `@` → `2.57.91.91`
+- `CNAME` `www` → `sensitivitycode.com`
+
+Ports checked on the server: `80` and `443` are Nginx, `3001` is BGMI `next-server`. `3002` is free. Use `3002`.
+
+Desktop project is not a git repo yet, so the server cannot `git clone` until a repo exists.
+
+Deploy order: folder `/var/www/sensitivitycode` → code into that folder → own database and `.env` → install, Prisma, build → PM2 on `3002` → Nginx → SSL. Stop after a failed build. Do not `pm2 reload` BGMI for this site.

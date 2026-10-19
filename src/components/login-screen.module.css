@@ -1,0 +1,112 @@
+.sheet {
+  width: min(440px, 100%);
+  margin: 72px auto 0;
+}
+
+.sheet h1 {
+  font-family: var(--display);
+  font-size: 48px;
+  font-weight: 560;
+  letter-spacing: -0.035em;
+  line-height: 1.05;
+}
+
+.line {
+  margin-top: 12px;
+  color: #3c4450;
+  font-size: 17px;
+  line-height: 1.45;
+}
+
+.line span {
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.sheet label {
+  display: block;
+  margin-top: 28px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.sheet input {
+  width: 100%;
+  height: 52px;
+  margin-top: 8px;
+  padding: 0 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: #fff;
+  font-size: 16px;
+}
+
+.sheet input:focus {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+#code {
+  font-family: var(--mono);
+  font-size: 22px;
+  letter-spacing: 0.28em;
+}
+
+.error,
+.notice {
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.error {
+  color: #9a3b3b;
+}
+
+.notice {
+  color: #3c4450;
+}
+
+.sheet button {
+  width: 100%;
+  height: 48px;
+  margin-top: 16px;
+  border-radius: 12px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.sheet button:hover {
+  background: #2a2f36;
+}
+
+.sheet button.back {
+  background: #fff;
+  color: var(--ink);
+  border: 1px solid #d5dbe3;
+}
+
+.sheet button.back:hover {
+  background: #fff;
+  border-color: var(--ink);
+}
+
+.fine {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+
+@media (max-width: 720px) {
+  .sheet {
+    margin-top: 40px;
+  }
+
+  .sheet h1 {
+    font-size: 40px;
+  }
+}

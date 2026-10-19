@@ -1,0 +1,252 @@
+.stage {
+  display: grid;
+  place-items: center;
+  padding: 48px 0 24px;
+}
+
+.card {
+  position: relative;
+  width: min(820px, 100%);
+  padding: 18px 20px 14px;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 2px solid #8adfff;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0) 32%),
+    repeating-linear-gradient(0deg, rgba(70, 150, 200, 0.2) 0 1px, transparent 1px 22px),
+    repeating-linear-gradient(90deg, rgba(70, 150, 200, 0.2) 0 1px, transparent 1px 22px),
+    linear-gradient(165deg, #f4fcff 0%, #c5eeff 38%, #8fd6fb 100%);
+  box-shadow:
+    0 0 0 1px #49c8ff,
+    0 0 0 8px rgba(90, 200, 255, 0.28),
+    0 0 36px rgba(40, 170, 240, 0.55),
+    inset 0 0 24px rgba(255, 255, 255, 0.55);
+  color: #101820;
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(30, 90, 130, 0.45);
+  border-radius: 10px;
+  pointer-events: none;
+}
+
+.warn {
+  position: absolute;
+  top: 16px;
+  left: 22px;
+  z-index: 2;
+  width: 26px;
+  height: 26px;
+}
+
+.corner {
+  position: absolute;
+  z-index: 2;
+  width: 22px;
+  height: 22px;
+  border-color: #12304c;
+  border-style: solid;
+}
+
+.corner[data-place="tl"] {
+  top: 12px;
+  left: 12px;
+  border-width: 2px 0 0 2px;
+}
+
+.corner[data-place="tr"] {
+  top: 12px;
+  right: 12px;
+  border-width: 2px 2px 0 0;
+}
+
+.corner[data-place="bl"] {
+  bottom: 12px;
+  left: 12px;
+  border-width: 0 0 2px 2px;
+}
+
+.corner[data-place="br"] {
+  right: 12px;
+  bottom: 12px;
+  border-width: 0 2px 2px 0;
+}
+
+.card h1 {
+  margin: 2px 0 14px;
+  font-family: Impact, "Arial Narrow", Arial, sans-serif;
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-align: center;
+}
+
+.body {
+  display: grid;
+  grid-template-columns: 168px minmax(0, 1fr) 148px;
+  gap: 16px 18px;
+  align-items: center;
+  padding: 0 16px 0 14px;
+}
+
+.portrait {
+  position: relative;
+  height: 214px;
+  overflow: hidden;
+}
+
+.portrait img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 28%;
+  background: transparent;
+  mix-blend-mode: multiply;
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent),
+    linear-gradient(transparent, #000 6%, #000 94%, transparent);
+  mask-composite: intersect;
+}
+
+.body dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.body dl div {
+  display: grid;
+  grid-template-columns: 112px max-content;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.body dt {
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.body dd {
+  margin: 0;
+  font-family: Impact, "Arial Narrow", Arial, sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 0.95;
+}
+
+.player {
+  font-size: 24px;
+  letter-spacing: 0;
+}
+
+.photo {
+  width: 142px;
+  height: 142px;
+  justify-self: end;
+  border: 5px solid #5ad4ff;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 3px rgba(180, 235, 255, 0.8),
+    0 0 0 8px rgba(70, 190, 255, 0.35),
+    0 0 24px rgba(40, 180, 255, 0.85);
+}
+
+.photo svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.barcode {
+  width: 132px;
+  height: 26px;
+  margin: 8px 18px 0 auto;
+  background: repeating-linear-gradient(
+    90deg,
+    #121820 0 1px,
+    transparent 1px 3px,
+    #121820 3px 6px,
+    transparent 6px 8px,
+    #121820 8px 9px,
+    transparent 9px 12px,
+    #121820 12px 15px,
+    transparent 15px 17px
+  );
+}
+
+.fine {
+  margin: 6px 36px 2px;
+  color: #1d2a38;
+  font-size: 9px;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.edit {
+  display: grid;
+  gap: 16px 18px;
+  width: min(820px, 100%);
+  margin-top: 28px;
+}
+
+.edit label {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.edit input {
+  width: 100%;
+  height: 52px;
+  margin-top: 8px;
+  padding: 0 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: #fff;
+  font: inherit;
+  font-size: 16px;
+}
+
+.edit input:focus {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+}
+
+.locked {
+  width: min(560px, 100%);
+  margin: 72px auto;
+}
+
+.locked h1 {
+  font-family: var(--display);
+  font-size: 48px;
+  font-weight: 560;
+  letter-spacing: -0.035em;
+  line-height: 1;
+}
+
+.locked p {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 18px;
+}
+
+.locked a {
+  display: inline-flex;
+  align-items: center;
+  height: 42px;
+  margin-top: 22px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font-weight: 650;
+}
+

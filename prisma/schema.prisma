@@ -1,0 +1,316 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SessionKind {
+  USER
+  ADMIN
+}
+
+enum OtpPurpose {
+  LOGIN
+  EDIT
+  ADMIN_LOGIN
+}
+
+enum GyroKind {
+  GYRO
+  NON_GYRO
+}
+
+enum FingerCount {
+  TWO
+  THREE
+  FOUR
+}
+
+enum GyroMode {
+  SCOPE_ON
+  ALWAYS_ON
+}
+
+enum SubmissionStatus {
+  LIVE
+  HIDDEN
+  DELETED
+}
+
+enum VoteValue {
+  WORKING
+  NOT_WORKING
+}
+
+enum ReportReason {
+  FAKE_SCREENSHOT
+  WRONG_CODE
+  SPAM
+  OTHER
+}
+
+enum ReportStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
+}
+
+enum LandingStatus {
+  SUGGESTED
+  SKIPPED
+  PUBLISHED
+  REJECTED
+  UNPUBLISHED
+}
+
+enum LandingSource {
+  SYSTEM
+  ADMIN_MANUAL
+}
+
+/// sensCodes.view | moderate | games | reports | landings
+enum AdminPermission {
+  VIEW
+  MODERATE
+  GAMES
+  REPORTS
+  LANDINGS
+}
+
+/// Email is stored only as a hash. maskedEmail is the admin display, never the full address.
+model User {
+  id          String   @id @default(cuid())
+  emailHash   String   @unique
+  maskedEmail String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  phonePref   UserPhonePref?
+  sessions    Session[]
+  grants      AdminGrant[]
+  submissions SensitivitySubmission[]
+  votes       SensitivityCodeVote[]
+  reports     SensitivityCodeReport[]
+  bookmarks   SensitivityCodeBookmark[]
+  auditLogs   AuditLog[]
+
+  @@index([createdAt])
+}
+
+model Session {
+  id        String      @id @default(cuid())
+  tokenHash String      @unique
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      SessionKind
+  expiresAt DateTime
+  createdAt DateTime    @default(now())
+
+  @@index([userId, kind])
+  @@index([expiresAt])
+}
+
+model EmailOtp {
+  id          String     @id @default(cuid())
+  emailHash   String
+  purpose     OtpPurpose
+  codeHash    String
+  expiresAt   DateTime
+  attempts    Int        @default(0)
+  lockedUntil DateTime?
+  lastSentAt  DateTime   @default(now())
+  requestIp   String?
+  consumedAt  DateTime?
+  createdAt   DateTime   @default(now())
+
+  @@index([emailHash, purpose, createdAt])
+  @@index([requestIp, createdAt])
+}
+
+model OtpRateLimit {
+  id          String   @id @default(cuid())
+  bucketKey   String   @unique
+  windowStart DateTime
+  count       Int      @default(0)
+  updatedAt   DateTime @updatedAt
+}
+
+model Game {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  enabled   Boolean  @default(true)
+  iconPath  String?
+  sortOrder Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  submissions SensitivitySubmission[]
+  landings    SensitivityLandingPage[]
+  urlSlugs    SubmissionSlug[]
+
+  @@index([enabled, sortOrder])
+}
+
+model SensitivitySubmission {
+  id              String           @id @default(cuid())
+  gameId          String
+  game            Game             @relation(fields: [gameId], references: [id])
+  ownerId         String
+  owner           User             @relation(fields: [ownerId], references: [id])
+  code            String
+  proofPath       String
+  phone           String
+  phoneSlug       String
+  fingers         FingerCount
+  gyro            GyroKind
+  status          SubmissionStatus @default(LIVE)
+  workingCount    Int              @default(0)
+  notWorkingCount Int              @default(0)
+  nameSlug        String
+  gyroMode        GyroMode?
+  fps             String?
+  ram             String?
+  playStyle       String?
+  tip             String?
+  profileName     String?
+  profileImagePath String?
+  rank            String?
+  kills           Int?
+  wins            Int?
+  kd              Decimal?         @db.Decimal(6, 2)
+  seasonNote      String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  slugs     SubmissionSlug[]
+  votes     SensitivityCodeVote[]
+  reports   SensitivityCodeReport[]
+  bookmarks SensitivityCodeBookmark[]
+
+  @@unique([gameId, phoneSlug, nameSlug])
+  @@index([gameId, status, createdAt])
+  @@index([gameId, phoneSlug, status])
+  @@index([gameId, status, fingers])
+  @@index([gyro, status])
+  @@index([status, notWorkingCount])
+  @@index([ownerId])
+}
+
+/// Old and current URL ends. A taken end is never reused, including after a rename redirect.
+model SubmissionSlug {
+  id           String                 @id @default(cuid())
+  submissionId String
+  submission   SensitivitySubmission  @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  gameId       String
+  game         Game                   @relation(fields: [gameId], references: [id])
+  phoneSlug    String
+  nameSlug     String
+  isCurrent    Boolean                @default(true)
+  createdAt    DateTime               @default(now())
+
+  @@unique([gameId, phoneSlug, nameSlug])
+  @@index([submissionId, isCurrent])
+}
+
+model SensitivityCodeVote {
+  id           String                @id @default(cuid())
+  submissionId String
+  submission   SensitivitySubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  value        VoteValue
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+
+  @@unique([submissionId, userId])
+  @@index([submissionId, value])
+}
+
+model SensitivityCodeReport {
+  id           String                @id @default(cuid())
+  submissionId String
+  submission   SensitivitySubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reason       ReportReason
+  note         String?
+  status       ReportStatus          @default(OPEN)
+  createdAt    DateTime              @default(now())
+  resolvedAt   DateTime?
+
+  @@index([status, createdAt])
+  @@index([submissionId])
+  @@index([userId])
+}
+
+model SensitivityCodeBookmark {
+  id           String                @id @default(cuid())
+  submissionId String
+  submission   SensitivitySubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime              @default(now())
+
+  @@unique([submissionId, userId])
+  @@index([userId])
+}
+
+model UserPhonePref {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phone     String
+  phoneSlug String
+  updatedAt DateTime @updatedAt
+}
+
+model SensitivityLandingPage {
+  id              String         @id @default(cuid())
+  title           String
+  slug            String         @unique
+  gameId          String?
+  game            Game?          @relation(fields: [gameId], references: [id])
+  phoneSlug       String?
+  gyro            GyroKind?
+  fingers         FingerCount?
+  metaTitle       String?
+  metaDescription String?
+  status          LandingStatus
+  source          LandingSource
+  codeCount       Int            @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  publishedAt     DateTime?
+
+  @@index([status, source])
+  @@index([gameId, phoneSlug])
+}
+
+model AdminGrant {
+  id         String          @id @default(cuid())
+  userId     String
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission AdminPermission
+  createdAt  DateTime        @default(now())
+
+  @@unique([userId, permission])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String
+  actor      User     @relation(fields: [actorId], references: [id])
+  action     String
+  targetType String
+  targetId   String
+  detail     Json?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([targetType, targetId])
+  @@index([actorId])
+}

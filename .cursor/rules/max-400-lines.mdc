@@ -1,0 +1,13 @@
+---
+description: Source files must stay at or under 400 lines
+alwaysApply: true
+---
+
+# 400 line cap
+
+Count every line in the file, including blanks. A file is over the cap at line 401.
+
+- Do not create or edit a file so it ends above 400 lines.
+- If a change would cross 400, split first (component, hook, or stylesheet), then make the change. Each new file stays at or under 400.
+- `src/components/edit-screen.module.css` is already over 400. Do not add lines to it. Split it in the same change before editing it.
+- Skip `package-lock.json`, `node_modules`, and `.next`.

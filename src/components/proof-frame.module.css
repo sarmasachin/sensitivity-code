@@ -1,0 +1,10 @@
+.frame,
+.large {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.large {
+  border-radius: 12px;
+}

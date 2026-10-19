@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --ink: #14171c;
+  --muted: #5c6570;
+  --line: #e4e7ee;
+  --line-strong: #cfd5df;
+  --paper: #ffffff;
+  --wash: #f5f6f8;
+  --good: #1d6b45;
+  --warn: #8a4e4e;
+  --sans: var(--font-source), "Segoe UI", sans-serif;
+  --display: var(--font-newsreader), Georgia, serif;
+  --mono: var(--font-plex), ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+
+body {
+  min-height: 100vh;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}

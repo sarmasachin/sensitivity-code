@@ -1,0 +1,21 @@
+---
+description: Style UI with Tailwind CSS, not new CSS modules
+alwaysApply: true
+---
+
+# Tailwind CSS
+
+Style layout, spacing, color, type, and responsive behavior with Tailwind utility classes on the component.
+
+- Do not add a new `*.module.css` file. Do not grow an existing CSS module for new UI.
+- Keep `corePlugins.preflight` set to `false` in `tailwind.config.js`. Existing CSS modules stay until that screen is edited.
+- When a screen is edited, put the new or changed styles in Tailwind classes on the TSX. Leave untouched screens on their current CSS.
+- Mobile layout uses `max-[980px]:` for the header breakpoint already in the site. Phone layout under that uses `max-[720px]:` where the rest of the site already breaks.
+
+```tsx
+// Bad — new CSS module for a button row
+import styles from "./row.module.css";
+
+// Good
+<div className="flex flex-wrap gap-2 max-[720px]:flex-col">
+```

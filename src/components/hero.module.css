@@ -1,0 +1,43 @@
+.hero {
+  padding: 72px 0 36px;
+  text-align: center;
+}
+
+.title {
+  margin: 0 auto;
+  font-family: var(--display);
+  font-size: clamp(44px, 6vw, 64px);
+  font-weight: 560;
+  letter-spacing: -0.035em;
+  line-height: 1.02;
+}
+
+.name {
+  white-space: nowrap;
+}
+
+.line {
+  max-width: 46rem;
+  margin: 18px auto 0;
+  color: var(--muted);
+  font-size: 18.5px;
+  line-height: 1.45;
+}
+
+@media (max-width: 720px) {
+  .hero {
+    padding: 28px 0 20px;
+  }
+
+  .title {
+    font-size: 36px;
+  }
+
+  .name {
+    white-space: normal;
+  }
+
+  .line {
+    font-size: 16px;
+  }
+}
