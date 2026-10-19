@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import { CodeDetail } from "@/components/code-detail";
@@ -16,7 +17,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return { title: `${item.game} Sensitivity Code for ${item.phone}` };
 }
 
-export default async function CodePage({ params }: PageProps) {
+export default function CodePage({ params }: PageProps) {
+  return (
+    <Suspense fallback={null}>
+      <CodeLoader params={params} />
+    </Suspense>
+  );
+}
+
+async function CodeLoader({ params }: PageProps) {
   await connection();
   const { id } = await params;
   const item = await findCode(id);
