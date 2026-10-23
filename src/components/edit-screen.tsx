@@ -24,7 +24,7 @@ export function EditScreen({ item, games }: EditScreenProps) {
   const [code, setCode] = useState(item.code);
   const [fingers, setFingers] = useState<string>(item.fingers);
   const [gyro, setGyro] = useState<string>(item.gyro);
-  const [gyroMode, setGyroMode] = useState(item.gyroMode);
+  const [gyroMode, setGyroMode] = useState<string>(item.gyroMode);
   const [player, setPlayer] = useState(item.player);
   const [playStyle, setPlayStyle] = useState(item.playStyle);
   const [ram, setRam] = useState(item.ram);
