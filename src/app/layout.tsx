@@ -24,7 +24,7 @@ const plex = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "Sensitivity Codes",
   description:
-    "Approved sensitivity codes for BGMI, BGMI Lite, PUBG Mobile, and PUBG Mobile Lite.",
+    "Approved sensitivity codes for BGMI, BGMI Air, PUBG Mobile, and PUBG Mobile Flash.",
 };
 
 export default function RootLayout({

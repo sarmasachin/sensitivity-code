@@ -13,4 +13,16 @@ export type SensitivityCode = {
   notWorking: number;
   publishedAt: string;
   publishedLabel: string;
+  detailsPath: string | null;
+  proofSrc: string | null;
+  profileSrc: string | null;
+  gyroMode: "" | "Scope On" | "Always On";
+  fps: string;
+  kills: string;
+  wins: string;
+  kd: string;
+  season: string;
+  tip: string;
+  myVote: "working" | "broken" | null;
+  saved: boolean;
 };

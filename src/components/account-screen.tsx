@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { accountEmailKey, savedCount } from "@/lib/session";
+import { accountEmailKey } from "@/lib/session";
 import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
 import styles from "./account-screen.module.css";
@@ -9,12 +9,32 @@ import styles from "./account-screen.module.css";
 export function AccountScreen() {
   const [email, setEmail] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
-  const [saved, setSaved] = useState(0);
+  const [saved, setSaved] = useState<{ id: string; game: string; phone: string; detailsPath: string | null }[]>([]);
+  const [codes, setCodes] = useState<{ id: string; game: string; phone: string; detailsPath: string | null }[]>([]);
 
   useEffect(() => {
-    setEmail(sessionStorage.getItem(accountEmailKey));
-    setSaved(savedCount());
-    setReady(true);
+    const current = sessionStorage.getItem(accountEmailKey);
+    const finish = (value: string | null) => {
+      setEmail(value);
+      setReady(true);
+      if (!value) return;
+      fetch("/api/account/codes")
+        .then((response) => response.json())
+        .then((data: { codes?: { id: string; game: string; phone: string; detailsPath: string | null }[] }) => setCodes(Array.isArray(data.codes) ? data.codes : []))
+        .catch(() => setCodes([]));
+      fetch("/api/account/saved")
+        .then((response) => response.json())
+        .then((data: { codes?: { id: string; game: string; phone: string; detailsPath: string | null }[] }) => setSaved(Array.isArray(data.codes) ? data.codes : []))
+        .catch(() => setSaved([]));
+    };
+    if (current) {
+      finish(current);
+      return;
+    }
+    fetch("/api/auth/me")
+      .then((response) => response.json())
+      .then((me: { signedIn?: boolean; maskedEmail?: string }) => finish(me.signedIn ? me.maskedEmail || "Signed in" : null))
+      .catch(() => finish(null));
   }, []);
 
   return (
@@ -36,7 +56,7 @@ export function AccountScreen() {
                   <circle cx="32" cy="26" r="10" fill="#f7f4ee" />
                   <path d="M14 56c2.2-12 10-16 18-16s15.8 4 18 16" fill="#f7f4ee" />
                 </svg>
-                <div>
+                <div className="min-w-0">
                   <p className={styles.email}>{email}</p>
                   <p className={styles.note}>This address stays on your account. It is never shown on a code.</p>
                 </div>
@@ -50,19 +70,38 @@ export function AccountScreen() {
               </nav>
               <div className={styles.cards}>
                 <section className={styles.card} id="saved">
-                  <p className={styles.count}>{saved}</p>
+                  <p className={styles.count}>{saved.length}</p>
                   <h2>Saved codes</h2>
-                  <p>Save a code from the gallery and it stays on this account.</p>
-                  <a href="/">Open gallery</a>
+                  {saved.length ? (
+                    <ul className="mt-3 flex flex-col gap-2">
+                      {saved.map((code) => (
+                        <li key={code.id}>
+                          <a href={code.detailsPath ?? `/codes/${code.id}`}>{code.game} · {code.phone}</a>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>Save a code from the gallery and it stays on this account.</p>
+                  )}
                 </section>
                 <section className={styles.card} id="submissions">
-                  <p className={styles.count}>0</p>
+                  <p className={styles.count}>{codes.length}</p>
                   <h2>Submissions</h2>
-                  <p>Nothing is in review. Approved codes show on the public gallery.</p>
+                  {codes.length ? (
+                    <ul className="mt-3 flex flex-col gap-2">
+                      {codes.map((code) => (
+                        <li key={code.id}>
+                          <a href={code.detailsPath ?? "/"}>{code.game} · {code.phone}</a>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>No codes yet. A submitted code shows on the gallery right away.</p>
+                  )}
                 </section>
                 <section className={`${styles.card} ${styles.submit}`} id="submit">
                   <h2>Submit a code</h2>
-                  <p>Phone, code, fingers, gyro, and a proof screenshot. It stays hidden until approved.</p>
+                  <p>Phone, code, fingers, gyro, and a proof screenshot. It shows on the gallery right away.</p>
                   <a href="/submit">Open form</a>
                 </section>
               </div>

@@ -83,12 +83,15 @@ enum AdminPermission {
 /// Email is stored only as a hash. maskedEmail is the admin display, never the full address.
 model User {
   id          String   @id @default(cuid())
-  emailHash   String   @unique
-  maskedEmail String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  emailHash    String   @unique
+  maskedEmail  String
+  passwordSalt String?
+  passwordHash String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   phonePref   UserPhonePref?
+  idCard      IdCard?
   sessions    Session[]
   grants      AdminGrant[]
   submissions SensitivitySubmission[]
@@ -257,6 +260,19 @@ model SensitivityCodeBookmark {
 
   @@unique([submissionId, userId])
   @@index([userId])
+}
+
+model IdCard {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  name      String
+  player    String
+  region    String
+  rank      String
+  kd        String
+  updatedAt DateTime @updatedAt
 }
 
 model UserPhonePref {

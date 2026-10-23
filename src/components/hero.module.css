@@ -6,7 +6,7 @@
 .title {
   margin: 0 auto;
   font-family: var(--display);
-  font-size: clamp(44px, 6vw, 64px);
+  font-size: clamp(32px, 7.2vw, 64px);
   font-weight: 560;
   letter-spacing: -0.035em;
   line-height: 1.02;
@@ -27,10 +27,6 @@
 @media (max-width: 720px) {
   .hero {
     padding: 28px 0 20px;
-  }
-
-  .title {
-    font-size: 36px;
   }
 
   .name {

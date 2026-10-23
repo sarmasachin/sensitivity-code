@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import type { SensitivityCode } from "@/lib/code-record";
 import { accountEmailKey } from "@/lib/session";
+import { Choice, Field } from "./edit-fields";
 import { ProofFrame } from "./proof-frame";
 import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
@@ -23,27 +24,41 @@ export function EditScreen({ item, games }: EditScreenProps) {
   const [code, setCode] = useState(item.code);
   const [fingers, setFingers] = useState<string>(item.fingers);
   const [gyro, setGyro] = useState<string>(item.gyro);
-  const [gyroMode, setGyroMode] = useState("");
+  const [gyroMode, setGyroMode] = useState(item.gyroMode);
   const [player, setPlayer] = useState(item.player);
   const [playStyle, setPlayStyle] = useState(item.playStyle);
   const [ram, setRam] = useState(item.ram);
-  const [fps, setFps] = useState("");
+  const [fps, setFps] = useState(item.fps);
   const [rank, setRank] = useState(item.rank ?? "");
-  const [kills, setKills] = useState("");
-  const [wins, setWins] = useState("");
-  const [kd, setKd] = useState("");
-  const [season, setSeason] = useState("");
-  const [tip, setTip] = useState("");
+  const [kills, setKills] = useState(item.kills);
+  const [wins, setWins] = useState(item.wins);
+  const [kd, setKd] = useState(item.kd);
+  const [season, setSeason] = useState(item.season);
+  const [tip, setTip] = useState(item.tip);
   const [proofPreview, setProofPreview] = useState("");
   const [photoPreview, setPhotoPreview] = useState("");
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [savedHref, setSavedHref] = useState(item.detailsPath ?? `/codes/${item.id}`);
   const [section, setSection] = useState<"code" | "profile" | "device" | "record" | "proof">("code");
   const seed = item.code.charCodeAt(0) + item.fingers.charCodeAt(0);
 
   useEffect(() => {
-    setEmail(sessionStorage.getItem(accountEmailKey));
-    setReady(true);
+    const stored = sessionStorage.getItem(accountEmailKey);
+    if (stored) {
+      setEmail(stored);
+      setReady(true);
+      return;
+    }
+    fetch("/api/auth/me")
+      .then((response) => response.json())
+      .then((me: { signedIn?: boolean; maskedEmail?: string }) => {
+        setEmail(me.signedIn ? me.maskedEmail || "Signed in" : null);
+        setReady(true);
+      })
+      .catch(() => setReady(true));
   }, []);
 
   useEffect(() => {
@@ -66,12 +81,21 @@ export function EditScreen({ item, games }: EditScreenProps) {
     }
     setError("");
     const url = URL.createObjectURL(file);
-    if (kind === "proof") setProofPreview(url);
-    else setPhotoPreview(url);
+    if (kind === "proof") {
+      setProofPreview(url);
+      setProofFile(file);
+    } else {
+      setPhotoPreview(url);
+      setPhotoFile(file);
+    }
   }
 
-  function save(event: FormEvent) {
+  async function save(event: FormEvent) {
     event.preventDefault();
+    if (item.id === "new") {
+      setError("Submit a code first, then edit it.");
+      return;
+    }
     if (!game || !phone.trim() || code.trim().length < 6 || !fingers || !gyro) {
       setSection("code");
       setError("Game, phone, code, fingers, and gyro stay required.");
@@ -92,6 +116,32 @@ export function EditScreen({ item, games }: EditScreenProps) {
       setError("KD should be a number.");
       return;
     }
+    const body = new FormData();
+    body.set("game", game);
+    body.set("phone", phone.trim());
+    body.set("code", code.trim());
+    body.set("fingers", fingers);
+    body.set("gyro", gyro);
+    body.set("gyroMode", gyroMode);
+    body.set("player", player.trim());
+    body.set("playStyle", playStyle.trim());
+    body.set("ram", ram.trim());
+    body.set("fps", fps.trim());
+    body.set("rank", rank.trim());
+    body.set("kills", kills.trim());
+    body.set("wins", wins.trim());
+    body.set("kd", kd.trim());
+    body.set("season", season.trim());
+    body.set("tip", tip.trim());
+    if (proofFile) body.set("proof", proofFile);
+    if (photoFile) body.set("photo", photoFile);
+    const response = await fetch(`/api/codes/${item.id}`, { method: "POST", body });
+    const data = (await response.json().catch(() => ({}))) as { error?: string; detailsPath?: string };
+    if (!response.ok) {
+      setError(data.error || "Could not save these details.");
+      return;
+    }
+    if (data.detailsPath) setSavedHref(data.detailsPath);
     setError("");
     setSaved(true);
   }
@@ -117,7 +167,7 @@ export function EditScreen({ item, games }: EditScreenProps) {
               <p>
                 {game} for {phone.trim()} keeps these details. Your email stays private.
               </p>
-              <a className={styles.primary} href={item.id === "new" ? "/" : `/codes/${item.id}`}>
+              <a className={styles.primary} href={savedHref}>
                 Back to this code
               </a>
             </div>
@@ -131,8 +181,8 @@ export function EditScreen({ item, games }: EditScreenProps) {
                     accept="image/jpeg,image/png,image/webp"
                     onChange={(event) => onImage(event.target.files?.[0], "photo")}
                   />
-                  {photoPreview ? (
-                    <img src={photoPreview} alt="" />
+                  {photoPreview || item.profileSrc ? (
+                    <img src={photoPreview || item.profileSrc || ""} alt="" />
                   ) : (
                     <span>
                       {player
@@ -302,7 +352,7 @@ export function EditScreen({ item, games }: EditScreenProps) {
                       accept="image/jpeg,image/png,image/webp"
                       onChange={(event) => onImage(event.target.files?.[0], "proof")}
                     />
-                    {proofPreview ? <img src={proofPreview} alt="" /> : <ProofFrame seed={seed} />}
+                    {proofPreview || item.proofSrc ? <img src={proofPreview || item.proofSrc || ""} alt="" /> : <ProofFrame seed={seed} />}
                   </label>
                 </section>
               ) : null}
@@ -322,48 +372,3 @@ export function EditScreen({ item, games }: EditScreenProps) {
   );
 }
 
-function Field({
-  label,
-  id,
-  wide,
-  children,
-}: {
-  label: string;
-  id: string;
-  wide?: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <div className={wide ? `${styles.field} ${styles.wide}` : styles.field}>
-      <label htmlFor={id}>{label}</label>
-      {children}
-    </div>
-  );
-}
-
-function Choice({
-  label,
-  values,
-  selected,
-  onPick,
-  wide,
-}: {
-  label: string;
-  values: string[];
-  selected: string;
-  onPick: (value: string) => void;
-  wide?: boolean;
-}) {
-  return (
-    <fieldset className={wide ? `${styles.field} ${styles.wide}` : styles.field}>
-      <legend>{label}</legend>
-      <div className={styles.choice}>
-        {values.map((value) => (
-          <button key={value} type="button" aria-pressed={selected === value} onClick={() => onPick(value)}>
-            {value}
-          </button>
-        ))}
-      </div>
-    </fieldset>
-  );
-}

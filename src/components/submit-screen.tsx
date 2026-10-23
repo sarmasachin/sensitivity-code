@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { accountEmailKey } from "@/lib/session";
+import { accountEmailKey, lastCodeKey } from "@/lib/session";
 import { SiteFooter } from "./site-footer";
 import { SiteHeader } from "./site-header";
 import styles from "./submit-screen.module.css";
@@ -16,15 +16,30 @@ export function SubmitScreen() {
   const [code, setCode] = useState("");
   const [fingers, setFingers] = useState("");
   const [gyro, setGyro] = useState("");
+  const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState("");
   const [preview, setPreview] = useState("");
   const [error, setError] = useState("");
-  const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
   const [games, setGames] = useState<string[]>([]);
 
   useEffect(() => {
-    setEmail(sessionStorage.getItem(accountEmailKey));
-    setReady(true);
+    const current = sessionStorage.getItem(accountEmailKey);
+    if (current) {
+      setEmail(current);
+      setReady(true);
+    } else {
+      fetch("/api/auth/me")
+        .then((response) => response.json())
+        .then((me: { signedIn?: boolean; maskedEmail?: string }) => {
+          setEmail(me.signedIn ? me.maskedEmail || "Signed in" : null);
+          setReady(true);
+        })
+        .catch(() => {
+          setEmail(null);
+          setReady(true);
+        });
+    }
     fetch("/api/games")
       .then((response) => response.json())
       .then((data: { games?: string[] }) => setGames(Array.isArray(data.games) ? data.games : []))
@@ -46,12 +61,14 @@ export function SubmitScreen() {
       return;
     }
     setError("");
+    setFile(file);
     setFileName(file.name);
     setPreview(URL.createObjectURL(file));
   }
 
-  function submit(event: FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault();
+    if (!email) return;
     if (!game) {
       setError("Choose a game.");
       return;
@@ -72,12 +89,34 @@ export function SubmitScreen() {
       setError("Choose Gyro or Non-Gyro.");
       return;
     }
-    if (!fileName) {
+    if (!file) {
       setError("Add a proof screenshot.");
       return;
     }
     setError("");
-    setSent(true);
+    setSending(true);
+    const body = new FormData();
+    body.set("email", email);
+    body.set("game", game);
+    body.set("phone", phone.trim());
+    body.set("code", code.trim());
+    body.set("fingers", fingers);
+    body.set("gyro", gyro);
+    body.set("proof", file);
+    try {
+      const response = await fetch("/api/codes", { method: "POST", body });
+      const data = (await response.json()) as { detailsPath?: string; id?: string; error?: string };
+      if (!response.ok || !data.detailsPath) {
+        setError(data.error || "Could not submit this code.");
+        setSending(false);
+        return;
+      }
+      if (data.id) sessionStorage.setItem(lastCodeKey, data.id);
+      window.location.href = data.detailsPath;
+    } catch {
+      setError("Could not submit this code.");
+      setSending(false);
+    }
   }
 
   return (
@@ -88,29 +127,17 @@ export function SubmitScreen() {
           {ready && !email ? (
             <div className={styles.locked}>
               <h1>Submit a code</h1>
-              <p>Sign in with email before you send a code for review.</p>
+              <p>Sign in with email before you submit a code.</p>
               <a className={styles.primary} href="/login">
                 Sign in
               </a>
             </div>
           ) : null}
-          {ready && email && sent ? (
-            <div className={styles.done}>
-              <p className={styles.kicker}>In review</p>
-              <h1>Submitted</h1>
-              <p>
-                Your {game} code for {phone.trim()} stays hidden until an admin approves it.
-              </p>
-              <a className={styles.primary} href="/account">
-                Back to account
-              </a>
-            </div>
-          ) : null}
-          {ready && email && !sent ? (
+          {ready && email ? (
             <form noValidate onSubmit={submit}>
               <p className={styles.kicker}>New code</p>
               <h1>Submit a code</h1>
-              <p className={styles.line}>It stays hidden until an admin approves it. Your email is never shown.</p>
+              <p className={styles.line}>It goes on the gallery right away. Your email is never shown.</p>
               <div className={styles.layout}>
                 <div className={styles.field}>
                   <label htmlFor="game">Game</label>
@@ -197,8 +224,8 @@ export function SubmitScreen() {
                 </div>
               </div>
               {error ? <p className={styles.error}>{error}</p> : null}
-              <button className={styles.submit} type="submit">
-                Submit for review
+              <button className={styles.submit} type="submit" disabled={sending}>
+                {sending ? "Submitting" : "Submit"}
               </button>
             </form>
           ) : null}

@@ -36,6 +36,10 @@ body {
   min-height: 100vh;
 }
 
+nextjs-portal {
+  display: none !important;
+}
+
 button,
 input {
   font: inherit;

@@ -226,7 +226,7 @@
 
 .locked h1 {
   font-family: var(--display);
-  font-size: 48px;
+  font-size: clamp(32px, 10vw, 48px);
   font-weight: 560;
   letter-spacing: -0.035em;
   line-height: 1;

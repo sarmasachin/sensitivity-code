@@ -6,7 +6,7 @@ import { listCodes } from "@/lib/codes";
 import styles from "./page.module.css";
 
 export const metadata: Metadata = {
-  title: "BGMI Lite Sensitivity Code",
+  title: "BGMI Air Sensitivity Code",
 };
 
 export default function Home() {
@@ -19,10 +19,10 @@ export default function Home() {
 
 async function HomeLoader() {
   await connection();
-  const codes = await listCodes({ game: "BGMI Lite", sort: "latest" });
+  const codes = await listCodes({ game: "BGMI Air", sort: "latest" });
   return (
     <div className={styles.page}>
-      <HomeScreen game="BGMI Lite" initialCodes={codes} />
+      <HomeScreen game="BGMI Air" initialCodes={codes} />
     </div>
   );
 }

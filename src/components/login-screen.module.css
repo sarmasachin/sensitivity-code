@@ -1,6 +1,6 @@
 .sheet {
-  width: min(440px, 100%);
-  margin: 72px auto 0;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .sheet h1 {

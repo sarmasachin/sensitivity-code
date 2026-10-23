@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import { currentUser } from "./auth-session";
 import { prisma } from "./prisma";
 import { sweepExpired } from "./maintain";
 import type { SensitivityCode } from "./code-record";
@@ -17,6 +18,18 @@ type CodeRow = {
   working: number;
   notWorking: number;
   createdAt: Date;
+  gameSlug: string;
+  phoneSlug: string;
+  nameSlug: string;
+  proofPath: string;
+  profilePath: string | null;
+  gyroMode: string | null;
+  fps: string | null;
+  kills: number | null;
+  wins: number | null;
+  kd: string | number | null;
+  season: string | null;
+  tip: string | null;
 };
 
 function likeTerm(value: string) {
@@ -39,8 +52,23 @@ function label(date: Date) {
   }).format(date);
 }
 
+function publicProof(path: string | null | undefined) {
+  return path?.startsWith("/proofs/") ? path : null;
+}
+
+function publicProfile(path: string | null | undefined) {
+  return path?.startsWith("/profiles/") ? path : null;
+}
+
+function gyroModeLabel(value: string | null): SensitivityCode["gyroMode"] {
+  if (value === "SCOPE_ON") return "Scope On";
+  if (value === "ALWAYS_ON") return "Always On";
+  return "";
+}
+
 function toCode(row: CodeRow): SensitivityCode {
   const published = row.createdAt.toISOString().slice(0, 10);
+  const proofSrc = publicProof(row.proofPath);
   return {
     id: row.id,
     game: row.game,
@@ -56,7 +84,41 @@ function toCode(row: CodeRow): SensitivityCode {
     notWorking: Number(row.notWorking),
     publishedAt: published,
     publishedLabel: label(row.createdAt),
+    detailsPath: proofSrc && row.gameSlug && row.phoneSlug && row.nameSlug ? `/sensitivity-codes/${row.gameSlug}/${row.phoneSlug}/${row.nameSlug}` : null,
+    proofSrc,
+    profileSrc: publicProfile(row.profilePath),
+    gyroMode: gyroModeLabel(row.gyroMode),
+    fps: row.fps ?? "",
+    kills: row.kills == null ? "" : String(row.kills),
+    wins: row.wins == null ? "" : String(row.wins),
+    kd: row.kd == null ? "" : String(row.kd),
+    season: row.season ?? "",
+    tip: row.tip ?? "",
+    myVote: null,
+    saved: false,
   };
+}
+
+async function present(rows: CodeRow[]) {
+  const codes = rows.map(toCode);
+  let userId: string | null = null;
+  try {
+    userId = (await currentUser())?.id ?? null;
+  } catch {
+    userId = null;
+  }
+  if (!userId || codes.length === 0) return codes;
+  const ids = codes.map((code) => code.id);
+  const [votes, marks] = await Promise.all([
+    prisma.sensitivityCodeVote.findMany({ where: { userId, submissionId: { in: ids } }, select: { submissionId: true, value: true } }),
+    prisma.sensitivityCodeBookmark.findMany({ where: { userId, submissionId: { in: ids } }, select: { submissionId: true } }),
+  ]);
+  const voteById = new Map(votes.map((vote) => [vote.submissionId, vote.value]));
+  const savedIds = new Set(marks.map((mark) => mark.submissionId));
+  return codes.map((code) => {
+    const vote = voteById.get(code.id);
+    return { ...code, myVote: vote === "WORKING" ? "working" as const : vote === "NOT_WORKING" ? "broken" as const : null, saved: savedIds.has(code.id) };
+  });
 }
 
 const codeSelect = `
@@ -72,7 +134,19 @@ const codeSelect = `
          s.code,
          s."workingCount" AS working,
          s."notWorkingCount" AS "notWorking",
-         s."createdAt" AS "createdAt"
+         s."createdAt" AS "createdAt",
+         g.slug AS "gameSlug",
+         s."phoneSlug" AS "phoneSlug",
+         s."nameSlug" AS "nameSlug",
+         s."proofPath" AS "proofPath",
+         s."profileImagePath" AS "profilePath",
+         s."gyroMode"::text AS "gyroMode",
+         s.fps,
+         s.kills,
+         s.wins,
+         s.kd::text AS kd,
+         s."seasonNote" AS season,
+         s.tip
   FROM "SensitivitySubmission" s
   JOIN "Game" g ON g.id = s."gameId"
 `;
@@ -107,9 +181,9 @@ export async function listCodes(input: {
       CASE WHEN s."notWorkingCount" >= 5 THEN 1 ELSE 0 END,
       CASE WHEN ${sort} = 'working' THEN s."workingCount" ELSE 0 END DESC,
       s."createdAt" DESC
-    LIMIT 60
+    LIMIT 80
   `);
-  return rows.map(toCode);
+  return present(rows);
 }
 
 export async function findCode(id: string) {
@@ -118,7 +192,22 @@ export async function findCode(id: string) {
     WHERE s.id = ${id} AND s.status = 'LIVE'
     LIMIT 1
   `);
-  return rows[0] ? toCode(rows[0]) : null;
+  const [code] = await present(rows);
+  return code ?? null;
+}
+
+export async function findPublicCode(game: string, phone: string, name: string) {
+  const rows = await prisma.$queryRaw<CodeRow[]>(Prisma.sql`
+    ${Prisma.raw(codeSelect)}
+    WHERE g.slug = ${game}
+      AND s."phoneSlug" = ${phone}
+      AND s."nameSlug" = ${name}
+      AND s.status = 'LIVE'
+      AND s."proofPath" LIKE '/proofs/%'
+    LIMIT 1
+  `);
+  const [code] = await present(rows);
+  return code ?? null;
 }
 
 export async function listGameNames() {

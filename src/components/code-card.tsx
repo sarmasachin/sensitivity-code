@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import type { SensitivityCode } from "@/lib/code-record";
-import { hasAccount, isSaved, saveCode, setVote, voteFor } from "@/lib/session";
 import styles from "./code-card.module.css";
 
 const tones = ["#243044", "#3d4a3a", "#4a3b32", "#2c3a44", "#3a3344", "#3e4632", "#2f3d38", "#3d342c"];
@@ -27,52 +25,67 @@ type CodeCardProps = {
 
 export function CodeCard({ item, onCopy, onGate }: CodeCardProps) {
   const [today, setToday] = useState("");
-  const [vote, setLocalVote] = useState<"working" | "broken" | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [vote, setLocalVote] = useState(item.myVote);
+  const [saved, setSaved] = useState(item.saved);
+  const [working, setWorking] = useState(item.working);
+  const [notWorking, setNotWorking] = useState(item.notWorking);
   const role = [item.rank, item.playStyle].filter(Boolean).join(" · ");
   const date =
     today && item.publishedAt === today
       ? "Updated today"
       : `Updated ${item.publishedLabel.replace(/ \d{4}$/, "")}`;
-  const working = item.working + (vote === "working" ? 1 : 0);
-  const notWorking = item.notWorking + (vote === "broken" ? 1 : 0);
 
   useEffect(() => {
     const now = new Date();
     const month = String(now.getMonth() + 1).padStart(2, "0");
     const day = String(now.getDate()).padStart(2, "0");
     setToday(`${now.getFullYear()}-${month}-${day}`);
-    if (!hasAccount()) {
-      setLocalVote(null);
-      setSaved(false);
-      return;
-    }
-    setLocalVote(voteFor(item.id));
-    setSaved(isSaved(item.id));
-  }, [item.id]);
+    setLocalVote(item.myVote);
+    setSaved(item.saved);
+    setWorking(item.working);
+    setNotWorking(item.notWorking);
+  }, [item]);
 
-  function mark(next: "working" | "broken") {
-    if (!hasAccount()) {
+  async function mark(next: "working" | "broken") {
+    const response = await fetch(`/api/codes/${item.id}/vote`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ value: next }),
+    });
+    if (response.status === 401) {
       onGate(next === "working" ? "Sign in to mark a code as working." : "Sign in to mark a code as not working.");
       return;
     }
-    setVote(item.id, next);
+    if (!response.ok) return;
+    const counts = (await response.json()) as { working: number; notWorking: number };
     setLocalVote(next);
+    setWorking(counts.working);
+    setNotWorking(counts.notWorking);
     onGate(next === "working" ? "Marked as working." : "Marked as not working.");
   }
 
-  function save() {
-    if (!hasAccount()) {
+  async function save() {
+    const response = await fetch(`/api/codes/${item.id}/save`, { method: "POST" });
+    if (response.status === 401) {
       onGate("Sign in to save this code.");
       return;
     }
-    saveCode(item.id);
+    if (!response.ok) return;
     setSaved(true);
     onGate("Saved.");
   }
 
+  async function report() {
+    const response = await fetch(`/api/codes/${item.id}/report`, { method: "POST" });
+    if (response.status === 401) {
+      onGate("Sign in to report this code.");
+      return;
+    }
+    if (response.ok) onGate("Report sent. We'll review this code.");
+  }
+
   function share() {
-    const link = `${window.location.origin}/codes/${item.id}`;
+    const link = `${window.location.origin}${item.detailsPath ?? `/codes/${item.id}`}`;
     const text = `${item.player}\n${item.phone}\n${item.code}\n${link}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
   }
@@ -122,12 +135,18 @@ export function CodeCard({ item, onCopy, onGate }: CodeCardProps) {
           <button className={styles.save} type="button" onClick={save}>
             {saved ? "Saved" : "Save"}
           </button>
-          <button className={styles.report} type="button" onClick={() => onGate("Report sent. We'll review this code.")}>
+          <button className={styles.report} type="button" onClick={report}>
             Report
           </button>
-          <Link className={styles.details} href={`/codes/${item.id}`}>
-            View Details
-          </Link>
+          {item.detailsPath ? (
+            <a className={styles.details} href={item.detailsPath}>
+              View Details
+            </a>
+          ) : (
+            <button className={`${styles.details} border-0`} type="button">
+              View Details
+            </button>
+          )}
         </div>
       </div>
     </article>

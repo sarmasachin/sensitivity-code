@@ -9,6 +9,7 @@ import styles from "./id-card-screen.module.css";
 const cardKey = "sensitivity-id-card";
 
 type CardFields = {
+  title: string;
   name: string;
   player: string;
   region: string;
@@ -46,6 +47,7 @@ export function IdCardScreen() {
   const [email, setEmail] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [card, setCard] = useState<CardFields>({
+    title: "PUBG LICENSE",
     name: "",
     player: "",
     region: "INDIA",
@@ -55,25 +57,38 @@ export function IdCardScreen() {
 
   useEffect(() => {
     const stored = sessionStorage.getItem(accountEmailKey);
-    setEmail(stored);
-    if (stored) {
-      const base = playerFromEmail(stored);
-      const saved = readCard();
-      setCard({
-        name: saved.name ?? base.name,
-        player: saved.player ?? base.player,
-        region: saved.region ?? "INDIA",
-        rank: saved.rank ?? "",
-        kd: saved.kd ?? "",
-      });
-    }
-    setReady(true);
+    fetch("/api/account/card")
+      .then((response) => (response.ok ? response.json() : { card: null }))
+      .then((data: { card: Partial<CardFields> | null }) => {
+        if (!stored && !data.card) {
+          setReady(true);
+          return;
+        }
+        const address = stored || "player@local";
+        const base = playerFromEmail(address);
+        const saved = data.card ?? readCard();
+        setEmail(stored || "Signed in");
+        setCard({
+          title: saved.title ?? "PUBG LICENSE",
+          name: !saved.name?.trim() || saved.name === "RAHUL SHARMA" || saved.name === "Sharma Sachinct255" ? "kalvin" : saved.name,
+          player: !saved.player?.trim() || saved.player === base.player || saved.player === "Sharma Sachinct255" ? "kalvin" : saved.player,
+          region: saved.region ?? "INDIA",
+          rank: saved.rank ?? "",
+          kd: saved.kd ?? "",
+        });
+        setReady(true);
+      })
+      .catch(() => setReady(true));
   }, []);
 
   function update(key: keyof CardFields, value: string) {
     setCard((current) => {
       const next = { ...current, [key]: value };
-      sessionStorage.setItem(cardKey, JSON.stringify(next));
+      fetch("/api/account/card", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(next),
+      });
       return next;
     });
   }
@@ -99,7 +114,7 @@ export function IdCardScreen() {
               <span className={styles.corner} data-place="tr" aria-hidden="true" />
               <span className={styles.corner} data-place="bl" aria-hidden="true" />
               <span className={styles.corner} data-place="br" aria-hidden="true" />
-              <h1>PUBG LICENSE</h1>
+              <h1>{shown(card.title)}</h1>
               <div className={styles.body}>
                 <div className={styles.portrait}>
                   <Portrait />
@@ -114,7 +129,7 @@ export function IdCardScreen() {
                     <dd>{shown(card.region)}</dd>
                   </div>
                   <div>
-                    <dt>Player Name:</dt>
+                    <dt>IG Name:</dt>
                     <dd className={styles.player}>{shown(card.player)}</dd>
                   </div>
                   <div>
@@ -135,18 +150,22 @@ export function IdCardScreen() {
                 </div>
               </div>
               <div className={styles.barcode} aria-hidden="true" />
-              <p className={styles.fine}>
-                Please Do Not Share Any Official Information Of This License. Team BATTLEGROUNDS Mobile India Official
+              <p className={`${styles.fine} !mt-3 !text-[22px] !font-bold !leading-none !tracking-[0.04em] !text-[#101820]`}>
+                sensitivitycode.com
               </p>
             </article>
             </div>
             <form className={`${styles.edit} grid-cols-1 min-[721px]:grid-cols-2`}>
+              <label className="min-[721px]:col-span-2">
+                Title
+                <input value={card.title} onChange={(event) => update("title", event.target.value)} />
+              </label>
               <label>
                 Name
                 <input value={card.name} onChange={(event) => update("name", event.target.value)} />
               </label>
               <label>
-                Player Name
+                IG Name
                 <input value={card.player} onChange={(event) => update("player", event.target.value)} />
               </label>
               <label>

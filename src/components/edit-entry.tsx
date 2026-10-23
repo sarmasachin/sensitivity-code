@@ -20,6 +20,18 @@ const emptyCode: SensitivityCode = {
   notWorking: 0,
   publishedAt: "",
   publishedLabel: "",
+  detailsPath: null,
+  proofSrc: null,
+  profileSrc: null,
+  gyroMode: "",
+  fps: "",
+  kills: "",
+  wins: "",
+  kd: "",
+  season: "",
+  tip: "",
+  myVote: null,
+  saved: false,
 };
 
 export function EditEntry() {
@@ -27,18 +39,24 @@ export function EditEntry() {
   const [games, setGames] = useState<string[]>([]);
 
   useEffect(() => {
-    const id = sessionStorage.getItem(lastCodeKey);
+    const stored = sessionStorage.getItem(lastCodeKey);
     fetch("/api/games")
       .then((response) => response.json())
       .then((data: { games?: string[] }) => setGames(Array.isArray(data.games) ? data.games : []))
       .catch(() => setGames([]));
-    if (!id) {
-      setItem(emptyCode);
-      return;
-    }
-    fetch(`/api/codes/${id}`)
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data: { code?: SensitivityCode } | null) => setItem(data?.code ?? emptyCode))
+    fetch("/api/account/codes")
+      .then((response) => (response.ok ? response.json() : { codes: [] }))
+      .then(async (data: { codes?: { id: string }[] }) => {
+        const codes = Array.isArray(data.codes) ? data.codes : [];
+        const owned = codes.find((code) => code.id === stored) ?? codes[0];
+        if (!owned) {
+          setItem(emptyCode);
+          return;
+        }
+        const response = await fetch(`/api/codes/${owned.id}`);
+        const body = (response.ok ? await response.json() : null) as { code?: SensitivityCode } | null;
+        setItem(body?.code ?? emptyCode);
+      })
       .catch(() => setItem(emptyCode));
   }, []);
 

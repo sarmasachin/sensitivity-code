@@ -1,6 +1,6 @@
 export const gamePages = [
   { slug: "bgmi", name: "BGMI" },
-  { slug: "bgmi-lite", name: "BGMI Lite" },
+  { slug: "bgmi-air", name: "BGMI Air" },
   { slug: "pubg-mobile", name: "PUBG Mobile" },
-  { slug: "pubg-mobile-lite", name: "PUBG Mobile Lite" },
+  { slug: "pubg-mobile-flash", name: "PUBG Mobile Flash" },
 ] as const;

@@ -16,6 +16,7 @@ type GalleryProps = {
 
 const gyros = ["All", "Gyro", "Non-Gyro"] as const;
 const fingers = ["All", "2F", "3F", "4F"] as const;
+const pageSize = 15;
 
 export function Gallery({ game, notice, onGate, initialCodes }: GalleryProps) {
   const [query, setQuery] = useState("");
@@ -24,6 +25,7 @@ export function Gallery({ game, notice, onGate, initialCodes }: GalleryProps) {
   const [sort, setSort] = useState<"latest" | "working">("latest");
   const [copied, setCopied] = useState(false);
   const [visible, setVisible] = useState<SensitivityCode[]>(initialCodes ?? []);
+  const [shown, setShown] = useState(pageSize);
   const [loaded, setLoaded] = useState((initialCodes ?? []).length > 0);
   const ticket = useRef(0);
 
@@ -41,11 +43,13 @@ export function Gallery({ game, notice, onGate, initialCodes }: GalleryProps) {
         .then((data: { codes?: SensitivityCode[] }) => {
           if (current !== ticket.current) return;
           setVisible(Array.isArray(data.codes) ? data.codes : []);
+          setShown(pageSize);
           setLoaded(true);
         })
         .catch(() => {
           if (current !== ticket.current) return;
           setVisible([]);
+          setShown(pageSize);
           setLoaded(true);
         });
     }, 200);
@@ -93,7 +97,7 @@ export function Gallery({ game, notice, onGate, initialCodes }: GalleryProps) {
               <Link
                 key={item.slug}
                 className={styles.chip}
-                href={item.slug === "bgmi-lite" ? "/" : `/${item.slug}`}
+                href={item.slug === "bgmi-air" ? "/" : `/${item.slug}`}
                 data-active={game === item.name}
                 aria-current={game === item.name ? "page" : undefined}
               >
@@ -138,11 +142,24 @@ export function Gallery({ game, notice, onGate, initialCodes }: GalleryProps) {
       ) : visible.length === 0 ? (
         <p className={styles.empty}>No approved codes match this search.</p>
       ) : (
-        <div className={styles.grid}>
-          {visible.map((item: SensitivityCode) => (
-            <CodeCard key={item.id} item={item} onCopy={copyCode} onGate={onGate} />
-          ))}
-        </div>
+        <>
+          <div className={styles.grid}>
+            {visible.slice(0, shown).map((item: SensitivityCode) => (
+              <CodeCard key={item.id} item={item} onCopy={copyCode} onGate={onGate} />
+            ))}
+          </div>
+          {shown < visible.length ? (
+            <div className="mt-6 flex justify-center">
+              <button
+                className="inline-flex h-11 cursor-pointer items-center rounded-full border border-solid border-[#d9dee7] bg-white px-6 text-sm font-semibold text-[#14171c] hover:bg-[#f5f6f8]"
+                type="button"
+                onClick={() => setShown((count) => count + pageSize)}
+              >
+                Load more
+              </button>
+            </div>
+          ) : null}
+        </>
       )}
       {copied ? <p className={styles.toast}>Copied</p> : null}
     </section>

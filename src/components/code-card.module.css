@@ -6,6 +6,7 @@
   border: 1px solid var(--line);
   border-radius: 16px;
   overflow: hidden;
+  container-type: inline-size;
 }
 
 .card:hover {
@@ -32,7 +33,8 @@
 }
 
 .player {
-  font-size: 16px;
+  overflow-wrap: anywhere;
+  font-size: clamp(15px, 4.4cqi, 17px);
   font-weight: 650;
   letter-spacing: -0.02em;
   line-height: 1.3;
@@ -40,11 +42,9 @@
 
 .role {
   margin-top: 2px;
-  overflow: hidden;
   color: var(--muted);
-  font-size: 13px;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  font-size: clamp(12px, 3.4cqi, 13.5px);
+  line-height: 1.35;
 }
 
 .share {
@@ -68,7 +68,8 @@
 }
 
 .title {
-  font-size: 16px;
+  overflow-wrap: anywhere;
+  font-size: clamp(15px, 4.6cqi, 18px);
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.35;
@@ -86,11 +87,10 @@
 }
 
 .code {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
   font-family: var(--mono);
-  font-size: 12.5px;
+  font-size: clamp(12px, 3.6cqi, 14px);
+  line-height: 1.45;
 }
 
 .copy {
@@ -107,9 +107,10 @@
 
 .stats {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px 12px;
 }
 
 .counts {
@@ -193,15 +194,6 @@
   .share {
     min-height: 44px;
     padding: 0 2px;
-  }
-
-  .code {
-    overflow: visible;
-    white-space: normal;
-    overflow-wrap: anywhere;
-    text-overflow: unset;
-    font-size: 13px;
-    line-height: 1.45;
   }
 
   .copy {
